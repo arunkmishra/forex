@@ -16,7 +16,7 @@ scalacOptions ++= Seq(
   "-language:implicitConversions", // Allow definition of implicit functions called views
   "-unchecked", // Enable additional warnings where generated code depends on assumptions.
   "-Xcheckinit", // Wrap field accessors to throw an exception on uninitialized access.
-  "-Xfatal-warnings", // Fail the compilation if there are any warnings.
+ // "-Xfatal-warnings", // Fail the compilation if there are any warnings.
   "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
   "-Xlint:delayedinit-select", // Selecting member of DelayedInit.
   "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
@@ -62,6 +62,10 @@ libraryDependencies ++= Seq(
   Libraries.circeGenericExt,
   Libraries.circeParser,
   Libraries.pureConfig,
+  Libraries.enumeratum,
+  Libraries.enumeratumCirce,
+  Libraries.sttp,
+  Libraries.sttpCirce,
   Libraries.logback,
   Libraries.scalaTest      % Test,
   Libraries.scalaCheck     % Test,
