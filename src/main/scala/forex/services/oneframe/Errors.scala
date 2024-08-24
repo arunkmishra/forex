@@ -1,7 +1,9 @@
 package forex.services.oneframe
 
 object Errors {
-  sealed trait OneFrameError
+  sealed trait OneFrameError {
+    def message: String
+  }
 
   object OneFrameError {
     final case object OneFrameTimeoutError extends OneFrameError {

@@ -6,4 +6,7 @@ package object services {
 
   type OneFrameService[F[_]] = oneframe.Algebra[F]
   final val OneFrameServices = oneframe.Interpreters
+
+  type RateStoreService[F[_]] = ratestore.Algebra[F]
+  final val RateStoreServices = ratestore.Interpreters
 }
