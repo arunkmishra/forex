@@ -19,8 +19,9 @@ import java.net.{ConnectException, SocketTimeoutException}
 class OneFrameLive[F[_]: Async](config: OneFrameConfig, backend: SttpBackend[Identity, Nothing, NothingT])
     extends Algebra[F] {
   override def fetchRatesForPairs(pairs: List[Rate.Pair]): F[Either[OneFrameError, List[Rate]]] = {
-    val params   = pairs.map((pair: Rate.Pair) => "pair" -> s"${pair.from}${pair.to}")
-    val url: Uri = uri"http://${config.http.host}:${config.http.port}/rates".params(params.toMap)
+    val params: Seq[(String, String)] = pairs.map((pair: Rate.Pair) => "pair" -> s"${pair.from}${pair.to}")
+
+    val url: Uri = uri"http://${config.http.host}:${config.http.port}/rates?$params"// .params(params.toMap)
 
     val request = basicRequest
       .header("token", config.authToken)
@@ -34,7 +35,7 @@ class OneFrameLive[F[_]: Async](config: OneFrameConfig, backend: SttpBackend[Ide
         resp: Response[Either[ResponseError[CError], Either[OneFrameServiceErrorResponse, List[Rate]]]] =>
           resp.body match {
             case Left(circeError)    => Left(OneFrameUnknownError(s"Circe failure ${circeError.getMessage}"))
-            case Right(Left(error))  => Left(OneFrameUnknownError("lef: "+error.error))
+            case Right(Left(error))  => Left(OneFrameUnknownError(error.error))
             case Right(Right(rates)) => Right(rates)
           }
       }.handleError {
