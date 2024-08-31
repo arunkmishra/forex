@@ -76,3 +76,5 @@ libraryDependencies ++= Seq(
 
 run / fork := true
 Test / parallelExecution := true
+
+mainClass := Some("forex.Main")
