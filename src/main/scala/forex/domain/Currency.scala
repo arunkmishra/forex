@@ -18,6 +18,6 @@ object Currency extends Enum[Currency] with CirceEnum[Currency] {
   def allCurrencyPairs: List[(Currency, Currency)] =
     (for {
       (currencyFrom, indexFrom) <- values.zipWithIndex
-      (currencyTo, indexTo) <- values.zipWithIndex  if indexFrom != indexTo
+      (currencyTo, indexTo) <- values.zipWithIndex if indexFrom != indexTo
     } yield (currencyFrom, currencyTo)).toList
 }

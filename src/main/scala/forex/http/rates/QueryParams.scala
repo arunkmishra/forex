@@ -1,10 +1,13 @@
 package forex.http.rates
 
-import forex.domain.Currency
-import org.http4s.{ ParseFailure, QueryParamDecoder }
-import org.http4s.dsl.impl.QueryParamDecoderMatcher
+import cats.data.Validated.{ invalidNel, valid }
+import cats.data.{ NonEmptyList, Validated, ValidatedNel }
 import cats.implicits._
 import enumeratum.NoSuchMember
+import forex.domain.Currency
+import forex.programs.rates.Protocol.GetRatesRequest
+import org.http4s.dsl.impl.ValidatingQueryParamDecoderMatcher
+import org.http4s.{ ParseFailure, QueryParamDecoder }
 
 object QueryParams {
 
@@ -15,7 +18,19 @@ object QueryParams {
       }
     }
 
-  object FromQueryParam extends QueryParamDecoderMatcher[Currency]("from")
-  object ToQueryParam extends QueryParamDecoderMatcher[Currency]("to")
+  private type ValidationResult[A] = ValidatedNel[ParseFailure, A]
 
+  private object FromQueryParam extends ValidatingQueryParamDecoderMatcher[Currency]("from")
+  private object ToQueryParam extends ValidatingQueryParamDecoderMatcher[Currency]("to")
+
+  object FromAndToQueryParams {
+    def unapply(params: Map[String, collection.Seq[String]]): Option[ValidationResult[GetRatesRequest]] = {
+      val from: Option[ValidationResult[Currency]] = FromQueryParam.unapply(params)
+      val to: Option[ValidationResult[Currency]]   = ToQueryParam.unapply(params)
+      (from, to).mapN {
+        case tuple: (ValidationResult[Currency], ValidationResult[Currency]) =>
+          tuple.mapN { case (f, t) => GetRatesRequest(f, t) }
+      }
+    }
+  }
 }

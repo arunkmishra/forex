@@ -1,21 +1,26 @@
 package forex
 
-import cats.effect.Sync
-import io.circe.generic.extras.decoding.{ EnumerationDecoder, UnwrappedDecoder }
-import io.circe.generic.extras.encoding.{ EnumerationEncoder, UnwrappedEncoder }
-import io.circe.{ Decoder, Encoder }
-import org.http4s.{ EntityDecoder, EntityEncoder }
+import org.http4s._
 import org.http4s.circe._
-
+import cats.data.{ NonEmptyList, ValidatedNel }
+import cats.effect.Sync
+import cats.instances.string._
+import cats.syntax.applicative._
+import cats.syntax.foldable._
+import io.circe.{ Decoder, Encoder }
 package object http {
 
-  implicit def valueClassEncoder[A: UnwrappedEncoder]: Encoder[A] = implicitly
-  implicit def valueClassDecoder[A: UnwrappedDecoder]: Decoder[A] = implicitly
-
-  implicit def enumEncoder[A: EnumerationEncoder]: Encoder[A] = implicitly
-  implicit def enumDecoder[A: EnumerationDecoder]: Decoder[A] = implicitly
-
   implicit def jsonDecoder[A <: Product: Decoder, F[_]: Sync]: EntityDecoder[F, A] = jsonOf[F, A]
-  implicit def jsonEncoder[A <: Product: Encoder, F[_]]: EntityEncoder[F, A] = jsonEncoderOf[F, A]
+  implicit def jsonEncoder[A <: Product: Encoder, F[_]]: EntityEncoder[F, A]       = jsonEncoderOf[F, A]
+
+  def handleRequestWithQueryParams[P, F[_]: Sync](params: ValidatedNel[ParseFailure, P],
+                                                  inner: P => F[Response[F]]): F[Response[F]] =
+    params.fold(
+      (errors: NonEmptyList[ParseFailure]) =>
+        Response[F](Status.BadRequest)
+          .withEntity(ErrorResponse(errors.map(_.sanitized).mkString_("; ")))
+          .pure[F],
+      (valid: P) => inner(valid)
+    )
 
 }

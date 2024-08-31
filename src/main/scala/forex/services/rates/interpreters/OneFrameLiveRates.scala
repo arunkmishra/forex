@@ -12,9 +12,7 @@ class OneFrameLiveRates[F[_]: Applicative](rateStore: RateStoreService[F]) exten
   private def isValidRate(rate: Rate): Boolean = ???
   override def get(pair: Rate.Pair): F[Either[errors.Error, Rate]] =
     rateStore.getRates.map { rates =>
-      println("rate in cache: " + rates)
       val res: Either[errors.Error, Rate] = rates.get(pair).toRight {
-        println(">> rate not found")
         OneFrameLookupFailed(s"Rate is missing for pair $pair")
       }
 
