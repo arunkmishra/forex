@@ -1,7 +1,6 @@
 package forex.http.rates
 
-import cats.data.Validated.{ invalidNel, valid }
-import cats.data.{ NonEmptyList, Validated, ValidatedNel }
+import cats.data.ValidatedNel
 import cats.implicits._
 import enumeratum.NoSuchMember
 import forex.domain.Currency

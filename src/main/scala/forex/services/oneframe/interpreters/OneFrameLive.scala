@@ -1,37 +1,34 @@
 package forex.services.oneframe.interpreters
 
+import cats.effect.Async
+import cats.implicits._
 import forex.config.OneFrameConfig
 import forex.domain.Rate
-import forex.services.oneframe.Algebra
-import cats.implicits._
-import cats._
-import cats.effect.Async
-import forex.services.oneframe.Errors.{ OneFrameError, OneFrameServiceErrorResponse }
-import sttp.client.circe.asJson
-import sttp.client._
-import sttp.model.Uri
 import forex.http.oneframe.Protocol._
+import forex.services.oneframe.Algebra
+import forex.services.oneframe.Errors.OneFrameError._
+import forex.services.oneframe.Errors.{ OneFrameError, OneFrameServiceErrorResponse }
 import io.circe.{ Error => CError }
-import forex.services.oneframe.Errors.OneFrameError.{
-  OneFrameTimeoutError,
-  OneFrameUnknownError,
-  OneFrameUnreachableError
-}
+import sttp.client._
+import sttp.client.circe.asJson
+import sttp.model.{ Header, MediaType, Uri }
 
 import java.net.{ ConnectException, SocketTimeoutException }
 
 class OneFrameLive[F[_]: Async](config: OneFrameConfig, backend: SttpBackend[Identity, Nothing, NothingT])
     extends Algebra[F] {
+
+  private def oneFrameBaseRequest: RequestT[Empty, Either[String, String], Nothing] =
+    basicRequest.header("token", config.authToken).headers(Header.contentType(MediaType.ApplicationJson))
   override def fetchRatesForPairs(pairs: List[Rate.Pair]): F[Either[OneFrameError, List[Rate]]] = {
     val params: Seq[(String, String)] = pairs.map((pair: Rate.Pair) => "pair" -> s"${pair.from}${pair.to}")
 
-    val url: Uri = uri"http://${config.http.host}:${config.http.port}/rates?$params" // .params(params.toMap)
+    val url: Uri = uri"http://${config.http.host}:${config.http.port}/rates?$params"
 
-    val request = basicRequest
-      .header("token", config.authToken)
+    val request = oneFrameBaseRequest
       .get(url)
       .response(asJson[Either[OneFrameServiceErrorResponse, List[Rate]]])
-    val response = Async[F]
+    Async[F]
       .delay {
         backend.send(request)
       }
@@ -48,8 +45,6 @@ class OneFrameLive[F[_]: Async](config: OneFrameConfig, backend: SttpBackend[Ide
         case conn: ConnectException    => Left(OneFrameUnreachableError(conn.getMessage))
         case t: Throwable              => Left(OneFrameUnknownError(t.getMessage))
       }
-
-    response
   }
 }
 
