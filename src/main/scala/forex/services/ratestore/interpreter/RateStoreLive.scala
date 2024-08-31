@@ -3,6 +3,8 @@ package forex.services.ratestore.interpreter
 import cats.effect.concurrent.Ref
 import cats.effect.{ Async, Timer }
 import cats.syntax.flatMap._
+import cats.syntax.applicativeError._
+import com.typesafe.scalalogging.LazyLogging
 import forex.domain.{ Currency, Rate }
 import forex.services.oneframe.Errors.OneFrameError
 import forex.services.{ OneFrameService, RateStoreService }
@@ -11,11 +13,12 @@ import fs2.Stream
 import scala.concurrent.duration.FiniteDuration
 
 class RateStoreLive[F[_]: Async: Timer](oneFrameService: OneFrameService[F], refreshInterval: FiniteDuration)
-    extends RateStoreService[F] {
-  val cache: Ref[F, Map[Rate.Pair, Rate]]        = Ref.unsafe(Map.empty[Rate.Pair, Rate])
-  override def getRates: F[Map[Rate.Pair, Rate]] = cache.get
+    extends RateStoreService[F]
+    with LazyLogging {
+  private val cache: Ref[F, Map[Rate.Pair, Rate]] = Ref.unsafe(Map.empty[Rate.Pair, Rate])
+  override def getRates: F[Map[Rate.Pair, Rate]]  = cache.get
 
-  private def updateRates(): F[Unit] =
+  def updateRates(): F[Unit] =
     oneFrameService
       .fetchRatesForPairs(Currency.allCurrencyPairs.map(Rate.Pair.tupled))
       .flatMap[List[Rate]] {
@@ -24,7 +27,11 @@ class RateStoreLive[F[_]: Async: Timer](oneFrameService: OneFrameService[F], ref
       }
       .flatMap { rates =>
         val cachedRate = rates.map(rate => rate.pair -> rate).toMap
+        logger.debug("Updating rate store cache")
         cache.set(cachedRate)
+      }
+      .handleError { t: Throwable =>
+        logger.error("An error occurred while updating rate store cache", t)
       }
 
   def backgroundRefresh(): Stream[F, Unit] =
