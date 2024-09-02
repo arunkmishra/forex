@@ -6,7 +6,7 @@ networks:
 
 services:
   oneFrame:
-    container_name: paidy_one_frame
+    container_name: one_frame
     image: paidyinc/one-frame
     networks:
       - backend

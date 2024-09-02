@@ -11,6 +11,12 @@ import java.time.{ OffsetDateTime, ZoneOffset }
 import java.time.temporal.ChronoUnit
 import scala.concurrent.duration.FiniteDuration
 
+/**
+  * Oneframe's live rates implementation which gets rates from the ratestore cache
+  * @param rateStore cache for rates
+  * @param rateValidityPeriod time frame till which rates are valid
+  * @tparam F effect type
+  * */
 class OneFrameLiveRates[F[_]: Applicative](rateStore: RateStoreService[F], rateValidityPeriod: FiniteDuration)
     extends RatesService[F] {
 
@@ -28,7 +34,6 @@ class OneFrameLiveRates[F[_]: Applicative](rateStore: RateStoreService[F], rateV
         .flatMap { rate =>
           if (isValidRate(rate)) Left(OneFrameLookupFailed("Expired rate")) else Right(rate)
         }
-
       res
     }
 }

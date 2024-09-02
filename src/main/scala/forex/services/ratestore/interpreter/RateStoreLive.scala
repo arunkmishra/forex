@@ -12,6 +12,12 @@ import fs2.Stream
 
 import scala.concurrent.duration.FiniteDuration
 
+/**
+  * Ratestore service implementation. Uses caches and update value asynchronously
+  * @param oneFrameService OneFrame Service instance
+  * @param refreshInterval duration after which rates are refreshed in cache
+  * @tparam F effect type
+  * */
 class RateStoreLive[F[_]: Async: Timer](oneFrameService: OneFrameService[F], refreshInterval: FiniteDuration)
     extends RateStoreService[F]
     with LazyLogging {

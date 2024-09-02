@@ -5,7 +5,7 @@ import cats.implicits._
 import forex.config.OneFrameConfig
 import forex.domain.Rate
 import forex.http.oneframe.Protocol._
-import forex.services.oneframe.Algebra
+import forex.services.OneFrameService
 import forex.services.oneframe.Errors.OneFrameError._
 import forex.services.oneframe.Errors.{ OneFrameError, OneFrameServiceErrorResponse }
 import io.circe.{ Error => CError }
@@ -15,8 +15,14 @@ import sttp.model.{ Header, MediaType, Uri }
 
 import java.net.{ ConnectException, SocketTimeoutException }
 
+/**
+  * OneFrame's live implementation that fetches rates from external service
+  * @param config Oneframe config
+  * @param backend Sttp backend instance
+  * @tparam F effect type
+  * */
 class OneFrameLive[F[_]: Async](config: OneFrameConfig, backend: SttpBackend[Identity, Nothing, NothingT])
-    extends Algebra[F] {
+    extends OneFrameService[F] {
 
   private def oneFrameBaseRequest: RequestT[Empty, Either[String, String], Nothing] =
     basicRequest.header("token", config.authToken).headers(Header.contentType(MediaType.ApplicationJson))

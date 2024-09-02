@@ -23,6 +23,12 @@ object QueryParams {
   private object ToQueryParam extends ValidatingQueryParamDecoderMatcher[Currency]("to")
 
   object FromAndToQueryParams {
+
+    /**
+      * Function to validate the input params
+      * @param params Validateable paramters
+      * @return validation result
+      * */
     def unapply(params: Map[String, collection.Seq[String]]): Option[ValidationResult[GetRatesRequest]] = {
       val from: Option[ValidationResult[Currency]] = FromQueryParam.unapply(params)
       val to: Option[ValidationResult[Currency]]   = ToQueryParam.unapply(params)

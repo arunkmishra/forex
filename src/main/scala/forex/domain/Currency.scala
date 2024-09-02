@@ -15,6 +15,10 @@ object Currency extends Enum[Currency] with CirceEnum[Currency] {
   case object SGD extends Currency
   case object USD extends Currency
   override def values: IndexedSeq[Currency] = findValues
+
+  /**
+    * All possible unique currency pairs
+    * */
   def allCurrencyPairs: List[(Currency, Currency)] =
     (for {
       (currencyFrom, indexFrom) <- values.zipWithIndex
